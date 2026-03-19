@@ -296,7 +296,7 @@ document.getElementById('btnlogin').onclick=async()=>{
 };
 document.getElementById('lpass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('btnlogin').click();});
 document.getElementById('btnout').onclick=async()=>{await sb.auth.signOut();location.reload();};
-document.getElementById('btnsaveak').onclick=()=>{const v=document.getElementById('akinp').value.trim();if(v){localStorage.setItem(AKK,v);apiKey=v;}afterLogin();};
+
 
 
 document.getElementById('navtabs').querySelectorAll('.ntab').forEach(b=>{
