@@ -145,15 +145,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
     <button class="bp" id="btnlogin">Entrar</button>
   </div>
 </div>
-<div class="screen" id="s-apikey">
-  <div class="card">
-    <h2>Chave da IA</h2>
-    <p>Insira sua API Key da Anthropic para usar microfone e imagem. Pode pular e usar só texto.</p>
-    <div class="fld"><label>API Key</label><input class="inp" type="password" id="akinp" placeholder="sk-ant-api03-..."/></div>
-    <button class="bp" id="btnsaveak" style="margin-bottom:10px">Salvar e continuar</button>
-    <button class="bs" id="btnskipak" style="width:100%">Pular por agora</button>
-  </div>
-</div>
 <div id="smain" style="display:none">
   <div class="navtabs" id="navtabs">
     <button class="ntab on" data-t="tarefas">Tarefas</button>
@@ -270,7 +261,7 @@ async function init(){
 async function loadProfile(u){
   CU=u;
   const{data,error}=await sb.from('profiles').select('*').eq('id',u.id).single();
-  if(error||!data){showS('apikey');return;}
+  if(error||!data){await sb.auth.signOut();showS('login');return;}
   CP=data;afterLogin();
 }
 
@@ -288,7 +279,6 @@ function afterLogin(){
     document.getElementById('mcargo').style.display='';
   }
   document.getElementById('s-login').classList.remove('on');
-  document.getElementById('s-apikey').classList.remove('on');
   document.getElementById('smain').style.display='block';
   initVoice();loadTasks();
   if(isAdm)loadUsers();
@@ -307,7 +297,7 @@ document.getElementById('btnlogin').onclick=async()=>{
 document.getElementById('lpass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('btnlogin').click();});
 document.getElementById('btnout').onclick=async()=>{await sb.auth.signOut();location.reload();};
 document.getElementById('btnsaveak').onclick=()=>{const v=document.getElementById('akinp').value.trim();if(v){localStorage.setItem(AKK,v);apiKey=v;}afterLogin();};
-document.getElementById('btnskipak').onclick=()=>afterLogin();
+
 
 document.getElementById('navtabs').querySelectorAll('.ntab').forEach(b=>{
   b.onclick=()=>{
