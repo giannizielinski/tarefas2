@@ -377,7 +377,7 @@ function initVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('vst').textContent='Voz nao suportada neste navegador';return;}
   rec=new SR();rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;
-  rec.onresult=e=>{let fi='',in2='';for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fi+=e.results[i][0].transcript;else in2+=e.results[i][0].transcript;}transcript+=fi;const el=document.getElementById('vtxt');el.textContent=transcript+in2;el.classList.add('on');};
+  rec.onresult=e=>{let final='',interim='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}transcript=final;const el=document.getElementById('vtxt');el.textContent=(final+interim).trim();el.classList.add('on');};
   rec.onerror=e=>{stopRec();if(e.error!=='no-speech')toast('Erro: '+e.error);};
   rec.onend=()=>{if(isRec)rec.start();};
 }
