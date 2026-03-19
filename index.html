@@ -269,6 +269,13 @@ async function loadProfile(u){
   CP=data;afterLogin();
 }
 
+async function loadApiKey(){
+  try {
+    const {data} = await sb.from('config').select('valor').eq('chave','claude_api_key').single();
+    if(data?.valor){ apiKey=data.valor; localStorage.setItem(AKK,data.valor); }
+  } catch(e){}
+}
+
 function afterLogin(){
   const isAdm=CP.cargo==='admin';
   const ub=document.getElementById('ubadge');
@@ -284,7 +291,7 @@ function afterLogin(){
   }
   document.getElementById('s-login').classList.remove('on');
   document.getElementById('smain').style.display='block';
-  initVoice();loadTasks();
+  loadApiKey();initVoice();loadTasks();
   if(isAdm)loadUsers();
 }
 
@@ -326,7 +333,7 @@ async function loadTasks(){
 function renderTasks(){
   const isAdm=CP&&CP.cargo==='admin';
   let list=[...tasks];
-  if(!isAdm)list=list.filter(t=>t.cargo_destino===CP.cargo||t.cargo_destino==='todos');
+  if(!isAdm)list=list.filter(t=>t.cargo_destino===CP.cargo);
   else if(cfilt!=='todos')list=list.filter(t=>t.cargo_destino===cfilt);
   if(filt==='abertas')list=list.filter(t=>!t.feita);
   else if(filt==='alta')list=list.filter(t=>t.prioridade==='alta'&&!t.feita);
