@@ -183,6 +183,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
       </button>
       <div class="vst" id="vst">Toque para falar suas tarefas</div>
       <div class="vtxt" id="vtxt"></div>
+      <div id="vactions" style="display:none;margin-top:10px;display:none;gap:8px;justify-content:center;">
+        <button id="btnvconfirm" style="padding:8px 20px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;">✓ Confirmar</button>
+        <button id="btnvcancel" style="padding:8px 16px;background:transparent;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;color:var(--mt);">✕ Cancelar</button>
+      </div>
     </div>
     <div class="iarea">
       <div class="mtitle">Adicionar por imagem</div>
@@ -372,7 +376,16 @@ function initVoice(){
 }
 document.getElementById('btnmic').onclick=()=>{if(!rec){toast('Voz nao disponivel');return;}if(isRec){stopRec();if(transcript.trim())processVoice(transcript.trim());}else startRec();};
 function startRec(){isRec=true;transcript='';document.getElementById('vtxt').textContent='';document.getElementById('vtxt').classList.remove('on');document.getElementById('btnmic').classList.add('rec');document.getElementById('vst').textContent='Gravando... Toque para parar';rec.start();}
-function stopRec(){isRec=false;document.getElementById('btnmic').classList.remove('rec');document.getElementById('vst').textContent='Toque para falar suas tarefas';try{rec.stop();}catch(e){}}
+function stopRec(){
+  isRec=false;
+  document.getElementById('btnmic').classList.remove('rec');
+  document.getElementById('vst').textContent='Toque para falar suas tarefas';
+  try{rec.stop();}catch(e){}
+  if(transcript.trim()){
+    const va=document.getElementById('vactions');
+    if(va){va.style.display='flex';}
+  }
+}
 async function processVoice(text){
   if(!apiKey){toast('Configure a API Key');return;}
   document.getElementById('proc').classList.add('on');
@@ -419,6 +432,24 @@ async function loadUsers(){
 function showS(name){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));const el=document.getElementById('s-'+name);if(el)el.classList.add('on');}
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),3000);}
+// Voice confirm/cancel
+const btnvc = document.getElementById('btnvconfirm');
+const btnvx = document.getElementById('btnvcancel');
+if(btnvc) btnvc.onclick = () => {
+  if(transcript.trim()) processVoice(transcript.trim());
+  document.getElementById('vactions').style.display='none';
+  document.getElementById('vtxt').textContent='';
+  document.getElementById('vtxt').classList.remove('on');
+  transcript='';
+};
+if(btnvx) btnvx.onclick = () => {
+  transcript='';
+  document.getElementById('vtxt').textContent='';
+  document.getElementById('vtxt').classList.remove('on');
+  document.getElementById('vactions').style.display='none';
+  toast('Gravação cancelada');
+};
+
 if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(const sw of r)sw.unregister();});}
 init();
 </script>
