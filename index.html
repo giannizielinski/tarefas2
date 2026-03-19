@@ -75,6 +75,13 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
 .bc{background:var(--bg);color:var(--mt);border:1px solid var(--bd);}
 .bcargo{background:var(--bl);color:#185fa5;}
 .bdate{font-size:11px;color:var(--mt);font-weight:600;}
+.bnew{background:#ffeac4;color:#7a4500;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.bvencido{background:#fdcfc8;color:#8a2000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.nota-box{margin-top:8px;font-size:12px;color:var(--mt);background:var(--bg);border-radius:8px;padding:6px 10px;line-height:1.4;}
+.task-expand{background:transparent;border:none;cursor:pointer;font-size:11px;color:var(--blue);font-weight:700;padding:0;margin-top:4px;font-family:Nunito,sans-serif;}
+.nota-input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:Nunito,sans-serif;background:var(--bg);color:var(--text);margin-top:6px;resize:none;}
+.nota-input:focus{outline:none;border-color:var(--blue);}
+.btn-nota-save{padding:5px 14px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;cursor:pointer;margin-top:4px;}
 .del{background:transparent;border:none;cursor:pointer;color:var(--mt);font-size:20px;line-height:1;opacity:.3;flex-shrink:0;padding:0 2px;}
 .del:hover{opacity:1;color:var(--coral);}
 .empty{text-align:center;padding:36px 20px;color:var(--mt);font-size:14px;font-weight:600;}
@@ -212,7 +219,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
       <div class="msels">
         <select class="ssel" id="mpri"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baixa">Baixa</option></select>
         <select class="ssel" id="mcat"><option value="clinica">Clinica</option><option value="financeiro">Financeiro</option><option value="marketing">Marketing</option><option value="equipe">Equipe</option><option value="pessoal">Pessoal</option><option value="outro">Outro</option></select>
-        <select class="ssel" id="mcargo" style="display:none"><option value="todos">Todos</option><option value="recepcao">Recepcao</option><option value="crc">CRC</option><option value="dentista">Dentista</option><option value="admin">Admin</option><option value="outro">Outro</option></select>
+        <input type="date" class="ssel" id="mprazo" title="Prazo" style="min-width:130px;"><select class="ssel" id="mcargo" style="display:none"><option value="todos">Todos</option><option value="recepcao">Recepcao</option><option value="crc">CRC</option><option value="dentista">Dentista</option><option value="admin">Admin</option><option value="outro">Outro</option></select>
       </div>
     </div>
   </div>
@@ -348,7 +355,29 @@ function renderTasks(){
   const el=document.getElementById('tasklist');
   if(!list.length){el.innerHTML='<div class="empty">Nenhuma tarefa aqui.</div>';return;}
   const bmap={alta:'ba',media:'bm',baixa:'bb'};
-  el.innerHTML=list.map(t=>'<div class="task '+t.prioridade+(t.feita?' done':'')+'"><div class="ck'+(t.feita?' on':'')+'" onclick="toggleT('+t.id+')"></div><div class="tbody"><div class="ttxt">'+esc(t.texto)+'</div><div class="tmeta"><span class="badge '+bmap[t.prioridade]+'">'+priL[t.prioridade]+'</span><span class="badge bc">'+(catL[t.categoria]||t.categoria)+'</span>'+(isAdm&&t.cargo_destino!=='todos'?'<span class="badge bcargo">'+(cargoL[t.cargo_destino]||t.cargo_destino)+'</span>':'')+'<span class="bdate">'+new Date(t.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+'</span></div></div><button class="del" onclick="delT('+t.id+')">x</button></div>').join('');
+  const hoje = new Date().toISOString().split('T')[0];
+  el.innerHTML=list.map(t=>{
+    const vencido = t.prazo && t.prazo < hoje && !t.feita;
+    const isNova = !t.lida && t.cargo_destino === (CP?.cargo) && !isAdm && !t.feita;
+    return '<div class="task '+t.prioridade+(t.feita?' done':'')+(vencido?' vencido':'')+'">'+
+      '<div class="ck'+(t.feita?' on':'')+'" onclick="toggleT('+t.id+')"></div>'+
+      '<div class="tbody">'+
+        '<div class="ttxt">'+esc(t.texto)+'</div>'+
+        '<div class="tmeta">'+
+          '<span class="badge '+bmap[t.prioridade]+'">'+priL[t.prioridade]+'</span>'+
+          '<span class="badge bc">'+(catL[t.categoria]||t.categoria)+'</span>'+
+          (isAdm&&t.cargo_destino!=='todos'?'<span class="badge bcargo">'+(cargoL[t.cargo_destino]||t.cargo_destino)+'</span>':'')+
+          (isNova?'<span class="bnew">Nova</span>':'')+
+          (vencido?'<span class="bvencido">Vencida</span>':'')+
+          (t.prazo&&!vencido?'<span class="bdate">até '+new Date(t.prazo+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+'</span>':'')+
+          '<span class="bdate">'+new Date(t.created_at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+'</span>'+
+        '</div>'+
+        (t.nota?'<div class="nota-box">'+esc(t.nota)+'</div>':'')+
+        (!t.lida&&!isAdm&&!t.feita?'<button class="task-expand" onclick="marcarLida('+t.id+')">✓ Marcar como lida</button>':'')+
+      '</div>'+
+      (isAdm?'<button class="del" onclick="delT('+t.id+')">x</button>':'')+
+    '</div>';
+  }).join('');
 }
 
 async function toggleT(id){const t=tasks.find(x=>x.id===id);if(!t)return;await sb.from('tarefas').update({feita:!t.feita}).eq('id',id);t.feita=!t.feita;renderTasks();}
@@ -362,7 +391,7 @@ document.getElementById('btnclear').onclick=async()=>{
 async function addTasks(list){
   const isAdm=CP&&CP.cargo==='admin';
   const cd=isAdm?(document.getElementById('mcargo').value||'todos'):CP.cargo;
-  const rows=list.map(t=>({texto:t.text||t.texto,prioridade:t.priority||t.prioridade||'media',categoria:t.category||t.categoria||'outro',cargo_destino:t.cargo_destino||cd,criada_por:CU.id}));
+  const rows=list.map(t=>({texto:t.text||t.texto,prioridade:t.priority||t.prioridade||'media',categoria:t.category||t.categoria||'outro',cargo_destino:t.cargo_destino||cd,criada_por:CU.id,prazo:t.prazo||null,nota:t.nota||null,lida:false}));
   const{data,error}=await sb.from('tarefas').insert(rows).select();
   if(error){toast('Erro: '+error.message);return;}
   tasks=[...(data||[]),...tasks];renderTasks();
@@ -371,7 +400,16 @@ async function addTasks(list){
 
 document.getElementById('btnaddm').onclick=addManual;
 document.getElementById('minp').addEventListener('keydown',e=>{if(e.key==='Enter')addManual();});
-function addManual(){const v=document.getElementById('minp').value.trim();if(!v)return;addTasks([{text:v,priority:document.getElementById('mpri').value,category:document.getElementById('mcat').value}]);document.getElementById('minp').value='';}
+function addManual(){
+  const v=document.getElementById('minp').value.trim();
+  if(!v)return;
+  const prazo=document.getElementById('mprazo')?.value||null;
+  const nota=document.getElementById('mnota')?.value?.trim()||null;
+  addTasks([{text:v,priority:document.getElementById('mpri').value,category:document.getElementById('mcat').value,prazo,nota}]);
+  document.getElementById('minp').value='';
+  if(document.getElementById('mprazo')) document.getElementById('mprazo').value='';
+  if(document.getElementById('mnota')) document.getElementById('mnota').value='';
+}
 
 function initVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -428,6 +466,13 @@ document.getElementById('btncreate').addEventListener('click',async()=>{
   document.getElementById('nemail').value='';document.getElementById('npass').value='';document.getElementById('nnome').value='';
   document.getElementById('btncreate').disabled=false;loadUsers();
 });
+
+async function marcarLida(id){
+  await sb.from('tarefas').update({lida:true,lida_por:CU.id,lida_em:new Date().toISOString()}).eq('id',id);
+  const t=tasks.find(x=>x.id===id);
+  if(t){t.lida=true;}
+  renderTasks();
+}
 
 async function loadUsers(){
   const{data}=await sb.from('profiles').select('*').order('cargo');
