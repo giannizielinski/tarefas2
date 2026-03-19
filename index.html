@@ -257,6 +257,11 @@ const catL={clinica:'Clinica',financeiro:'Financeiro',marketing:'Marketing',equi
 const cargoL={admin:'Admin',recepcao:'Recepcao',crc:'CRC',dentista:'Dentista',outro:'Outro',todos:'Todos'};
 
 async function init(){
+  // Limpa dados do app antigo que podem interferir
+  const validKeys = ['uniduni_api_key','uniduni_tasks_v1','uniduni_tasks_v2','uniduni_tasks_v3'];
+  Object.keys(localStorage).forEach(k => {
+    if(!validKeys.includes(k) && k.includes('uniduni')) localStorage.removeItem(k);
+  });
   const{data:{session}}=await sb.auth.getSession();
   if(session) await loadProfile(session.user);
   else showS('login');
