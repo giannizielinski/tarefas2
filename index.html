@@ -376,10 +376,10 @@ function addManual(){const v=document.getElementById('minp').value.trim();if(!v)
 function initVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('vst').textContent='Voz nao suportada neste navegador';return;}
-  rec=new SR();rec.lang='pt-BR';rec.continuous=true;rec.interimResults=true;
-  rec.onresult=e=>{let final='',interim='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}transcript=final;const el=document.getElementById('vtxt');el.textContent=(final+interim).trim();el.classList.add('on');};
+  rec=new SR();rec.lang='pt-BR';rec.continuous=false;rec.interimResults=true;
+  rec.onresult=e=>{let final='',interim='';for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}if(final) transcript+=final;const el=document.getElementById('vtxt');el.textContent=(transcript+interim).trim();el.classList.add('on');};
   rec.onerror=e=>{stopRec();if(e.error!=='no-speech')toast('Erro: '+e.error);};
-  rec.onend=()=>{if(isRec)rec.start();};
+  rec.onend=()=>{if(isRec){stopRec();}};
 }
 document.getElementById('btnmic').onclick=()=>{if(!rec){toast('Voz nao disponivel');return;}if(isRec){stopRec();if(transcript.trim())processVoice(transcript.trim());}else startRec();};
 function startRec(){isRec=true;transcript='';document.getElementById('vtxt').textContent='';document.getElementById('vtxt').classList.remove('on');document.getElementById('btnmic').classList.add('rec');document.getElementById('vst').textContent='Gravando... Toque para parar';rec.start();}
