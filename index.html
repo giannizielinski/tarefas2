@@ -219,7 +219,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
       <div class="msels">
         <select class="ssel" id="mpri"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baixa">Baixa</option></select>
         <select class="ssel" id="mcat"><option value="clinica">Clinica</option><option value="financeiro">Financeiro</option><option value="marketing">Marketing</option><option value="equipe">Equipe</option><option value="pessoal">Pessoal</option><option value="outro">Outro</option></select>
-        <input type="date" class="ssel" id="mprazo" title="Prazo" style="min-width:130px;"><select class="ssel" id="mcargo" style="display:none"><option value="todos">Todos</option><option value="recepcao">Recepcao</option><option value="crc">CRC</option><option value="dentista">Dentista</option><option value="admin">Admin</option><option value="outro">Outro</option></select>
+        <input type="date" class="ssel" id="mprazo" title="Prazo" style="min-width:130px;"><select class="ssel" id="mcargo" style="display:none"><option value="todos">Todos</option><option value="todos">Todos</option><option value="recepcao">Recepção</option><option value="crc">CRC</option><option value="dentista">Dentista</option><option value="asb">ASB</option><option value="admin">Admin</option><option value="outro">Outro</option></select>
       </div>
     </div>
   </div>
@@ -256,7 +256,7 @@ let CU=null,CP=null,tasks=[],filt='todas',cfilt='todos';
 let rec=null,isRec=false,transcript='',imgB64='',imgMime='';
 const priL={alta:'Alta',media:'Media',baixa:'Baixa'};
 const catL={clinica:'Clinica',financeiro:'Financeiro',marketing:'Marketing',equipe:'Equipe',pessoal:'Pessoal',outro:'Outro'};
-const cargoL={admin:'Admin',recepcao:'Recepcao',crc:'CRC',dentista:'Dentista',outro:'Outro',todos:'Todos'};
+const cargoL={admin:'Admin',recepcao:'Recepção',crc:'CRC',dentista:'Dentista',asb:'ASB',outro:'Outro',todos:'Todos'};
 
 async function init(){
   // Limpa dados do app antigo que podem interferir
@@ -347,10 +347,11 @@ function renderTasks(){
   else if(filt==='feitas')list=list.filter(t=>t.feita);
   const ord={alta:0,media:1,baixa:2};
   list.sort((a,b)=>{if(a.feita!==b.feita)return a.feita?1:-1;return ord[a.prioridade]-ord[b.prioridade];});
-  document.getElementById('st').textContent=tasks.length;
-  document.getElementById('sa').textContent=tasks.filter(t=>t.prioridade==='alta'&&!t.feita).length;
-  document.getElementById('sp').textContent=tasks.filter(t=>!t.feita).length;
-  document.getElementById('sd').textContent=tasks.filter(t=>t.feita).length;
+  const myTasks = isAdm ? tasks : tasks.filter(t=>t.cargo_destino===CP.cargo);
+  document.getElementById('st').textContent=myTasks.length;
+  document.getElementById('sa').textContent=myTasks.filter(t=>t.prioridade==='alta'&&!t.feita).length;
+  document.getElementById('sp').textContent=myTasks.filter(t=>!t.feita).length;
+  document.getElementById('sd').textContent=myTasks.filter(t=>t.feita).length;
   document.getElementById('fcount').textContent=list.length?(list.length+' tarefa(s)'):'';
   const el=document.getElementById('tasklist');
   if(!list.length){el.innerHTML='<div class="empty">Nenhuma tarefa aqui.</div>';return;}
@@ -375,7 +376,7 @@ function renderTasks(){
         (t.nota?'<div class="nota-box">'+esc(t.nota)+'</div>':'')+
         (!t.lida&&!isAdm&&!t.feita?'<button class="task-expand" onclick="marcarLida('+t.id+')">✓ Marcar como lida</button>':'')+
       '</div>'+
-      (isAdm?'<button class="del" onclick="delT('+t.id+')">x</button>':'')+
+      (isAdm?'<div style="display:flex;flex-direction:column;gap:4px"><button class="del" onclick="delT('+t.id+')">x</button><button class="del" style="font-size:14px;opacity:0.4" onclick="editT('+t.id+')">✎</button></div>':'')+
     '</div>';
   }).join('');
 }
@@ -390,7 +391,8 @@ document.getElementById('btnclear').onclick=async()=>{
 
 async function addTasks(list){
   const isAdm=CP&&CP.cargo==='admin';
-  const cd=isAdm?(document.getElementById('mcargo').value||'todos'):CP.cargo;
+  const cargoEl=document.getElementById('mcargo');
+  const cd=isAdm?(cargoEl?.value||'todos'):(cargoEl?.value||CP.cargo);
   const rows=list.map(t=>({texto:t.text||t.texto,prioridade:t.priority||t.prioridade||'media',categoria:t.category||t.categoria||'outro',cargo_destino:t.cargo_destino||cd,criada_por:CU.id,prazo:t.prazo||null,nota:t.nota||null,lida:false}));
   const{data,error}=await sb.from('tarefas').insert(rows).select();
   if(error){toast('Erro: '+error.message);return;}
@@ -466,6 +468,19 @@ document.getElementById('btncreate').addEventListener('click',async()=>{
   document.getElementById('nemail').value='';document.getElementById('npass').value='';document.getElementById('nnome').value='';
   document.getElementById('btncreate').disabled=false;loadUsers();
 });
+
+async function editT(id){
+  const t=tasks.find(x=>x.id===id);
+  if(!t)return;
+  const novoTexto=prompt('Editar tarefa:',t.texto);
+  if(!novoTexto||novoTexto===t.texto)return;
+  const novoCargo=prompt('Cargo (todos/recepcao/crc/dentista/asb/admin/outro):',t.cargo_destino||'todos');
+  await sb.from('tarefas').update({texto:novoTexto,cargo_destino:novoCargo||t.cargo_destino}).eq('id',id);
+  t.texto=novoTexto;
+  if(novoCargo)t.cargo_destino=novoCargo;
+  renderTasks();
+  toast('Tarefa atualizada!');
+}
 
 async function marcarLida(id){
   await sb.from('tarefas').update({lida:true,lida_por:CU.id,lida_em:new Date().toISOString()}).eq('id',id);
