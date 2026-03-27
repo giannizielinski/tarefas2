@@ -399,7 +399,9 @@ function afterLogin(){
   }
   document.getElementById('s-login').classList.remove('on');
   document.getElementById('smain').style.display='block';
-  loadApiKey();initVoice();loadTasks();
+  loadApiKey();initVoice();
+  await loadTasks();
+  renderTasks();
   // Request notification permission
   if('Notification' in window && Notification.permission === 'default'){
     Notification.requestPermission();
@@ -491,8 +493,10 @@ document.getElementById('navtabs').querySelectorAll('.ntab').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('.ntab').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
-    document.querySelectorAll('#t-tarefas,#t-add,#t-admin').forEach(t=>t.classList.remove('on'));
+    document.querySelectorAll('#t-tarefas,#t-add,#t-admin,#t-dashboard').forEach(t=>t.classList.remove('on'));
     document.getElementById('t-'+b.dataset.t)&&document.getElementById('t-'+b.dataset.t).classList.add('on');
+    if(b.dataset.t==='tarefas') renderTasks();
+    if(b.dataset.t==='dashboard') renderDashboard();
   };
 });
 document.getElementById('ctabs').querySelectorAll('.ctab').forEach(b=>{
@@ -503,8 +507,10 @@ document.querySelectorAll('.filt').forEach(b=>{
 });
 
 async function loadTasks(){
-  const{data}=await sb.from('tarefas').select('*').order('created_at',{ascending:false});
-  tasks=data||[];renderTasks();
+  const{data,error}=await sb.from('tarefas').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadTasks error:',error);return;}
+  tasks=data||[];
+  renderTasks();
 }
 
 function renderTasks(){
