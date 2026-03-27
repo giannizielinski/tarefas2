@@ -338,6 +338,16 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--tx);min-he
   </div>
 </div>
 <script>
+// Kill any old service workers
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  });
+  caches.keys().then(keys=>{
+    keys.forEach(k=>caches.delete(k));
+  });
+}
+
 const SURL='https://qrqdrgxegainnlpqlmvs.supabase.co';
 const SKEY='sb_publishable_h-1--lefl0pvIpm_LmhcuA_-EJVL2B1';
 const sb=supabase.createClient(SURL,SKEY);
